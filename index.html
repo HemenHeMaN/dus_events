@@ -277,7 +277,15 @@ async function loadAllEvents() {
 
   results.forEach((res, i) => {
     if (res.status === "fulfilled") {
-      events = events.concat(res.value.events || []);
+      // Falls die JSON-Datei intern ein anderes Venue-Kürzel nutzt, korrigieren wir es hier direkt beim Laden:
+      let venueKey = FILES[i].replace(".json", "");
+      let fetchedEvents = (res.value.events || []).map(e => {
+        // e ist ein Array: [start, end, title, venue, note]
+        // Wir erzwingen, dass das Venue zur jeweiligen Datei passt, falls der Scraper was anderes reinschreibt
+        return [e[0], e[1], e[2], venueKey, e[4]];
+      });
+
+      events = events.concat(fetchedEvents);
       if (res.value.updated) updatedTimes.push(res.value.updated);
       loadedCount++;
     } else {
@@ -365,11 +373,14 @@ function renderEvents() {
   const el = document.getElementById("eventList");
   
   const filtered = allEvents.filter(e => {
+    const venue = e[3];
+    const title = e[2];
+
     // Prüfen, ob das Venue aktiv ist
-    if (!activeVenues.has(e[3])) return false;
+    if (!activeVenues.has(venue)) return false;
     
-    // DEG-Spiele im Dome ausblenden
-    if (e[3] === 'dome' && /duesseldorfer eg|deg/i.test(e[2])) {
+    // Aggressiver Filter für DEG-Spiele im Dome (fängt "Duesseldorfer", "Düsseldorfer", "Eg", "Eisbären" etc. ab)
+    if (venue === 'dome' && /d[uü]sseldorfer\s*eg|deg\b/i.test(title)) {
       return false;
     }
 
