@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Taxi Events Düsseldorf</title>
+<style>
+  :root {
+    --bg: #f4f4f6;
+    --card-bg: #ffffff;
+    --text: #1a1a1a;
+    --muted: #666;
+    --accent: #d4a017;
+    --border: #e0e0e0;
+  }
+  [data-theme="dark"] {
+    --bg: #14151a;
+    --card-bg: #1f2128;
+    --text: #f0f0f0;
+    --muted: #9a9a9a;
+    --accent: #f5c542;
+    --border: #33353d;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 16px;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  h1 { font-size: 1.3rem; margin: 0; }
+  .toggle-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: var(--text);
+  }
+  .venue-filter {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .venue-filter button {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 16px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .venue-filter button.active {
+    background: var(--accent);
+    color: #1a1a1a;
+    border-color: var(--accent);
+  }
+  .event {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .event .date {
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 0.85rem;
+  }
+  .event .title { font-size: 1.05rem; margin: 4px 0 2px; }
+  .event .venue { color: var(--muted); font-size: 0.85rem; }
+  .event .note { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
+  .status { color: var(--muted); font-size: 0.85rem; margin-bottom: 12px; }
+  .empty { color: var(--muted); text-align: center; padding: 40px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🚕 Events Düsseldorf</h1>
+  <button class="toggle-btn" id="themeToggle" title="Tag/Nacht umschalten">🌙</button>
+</header>
+
+<div class="status" id="status">Lade Termine …</div>
+
+<div class="venue-filter" id="venueFilter"></div>
+
+<div id="eventList"></div>
+
+<script>
+// Dateien, die geladen werden. deg.json und fortuna.json sind eigene
+// Scraper/Workflows, ihre Events tragen aber venue="dome" bzw. "arena" und
+// laufen deshalb automatisch in den jeweiligen Filter-Button mit rein.
+const FILES = [
+  "arena.json",
+  "dome.json",
+  "meh.json",
+  "messe.json",
+  "deg.json",
+  "fortuna.json",
+];
+
+// Ein Filter-Button pro angezeigtem Ort (nicht pro Datei).
+const VENUES = [
+  { venue: "arena", label: "Merkur Spiel-Arena" },
+  { venue: "dome",  label: "PSD Bank Dome" },
+  { venue: "meh",   label: "Mitsubishi Electric Halle" },
+  { venue: "messe", label: "Messe Düsseldorf" },
+];
+
+const VENUE_LABELS = Object.fromEntries(VENUES.map(v => [v.venue, v.label]));
+
+let allEvents = [];
+let activeVenues = new Set(VENUES.map(v => v.venue));
+
+async function loadAllEvents() {
+  const results = await Promise.allSettled(
+    FILES.map(f => fetch(f, { cache: "no-store" }).then(r => r.json()))
+  );
+
+  let events = [];
+  let loadedCount = 0;
+  let updatedTimes = [];
+
+  results.forEach((res, i) => {
+    if (res.status === "fulfilled") {
+      events = events.concat(res.value.events || []);
+      if (res.value.updated) updatedTimes.push(res.value.updated);
+      loadedCount++;
+    } else {
+      console.warn(`Konnte ${FILES[i]} nicht laden:`, res.reason);
+    }
+  });
+
+  // Nach Datum, dann Titel sortieren (Format: [start, end, title, venue, note?])
+  events.sort((a, b) => (a[0] + a[2]).localeCompare(b[0] + b[2]));
+
+  allEvents = events;
+
+  const statusEl = document.getElementById("status");
+  if (loadedCount === 0) {
+    statusEl.textContent = "Keine Termine geladen — bitte später erneut versuchen.";
+  } else {
+    const newest = updatedTimes.sort().slice(-1)[0] || "";
+    statusEl.textContent = `${loadedCount}/${FILES.length} Quellen geladen · Stand: ${newest}`;
+  }
+
+  renderVenueFilter();
+  renderEvents();
+}
+
+function renderVenueFilter() {
+  const el = document.getElementById("venueFilter");
+  el.innerHTML = "";
+  VENUES.forEach(v => {
+    const btn = document.createElement("button");
+    btn.textContent = v.label;
+    btn.className = activeVenues.has(v.venue) ? "active" : "";
+    btn.onclick = () => {
+      if (activeVenues.has(v.venue)) activeVenues.delete(v.venue);
+      else activeVenues.add(v.venue);
+      renderVenueFilter();
+      renderEvents();
+    };
+    el.appendChild(btn);
+  });
+}
+
+function renderEvents() {
+  const el = document.getElementById("eventList");
+  const filtered = allEvents.filter(e => activeVenues.has(e[3]));
+
+  if (filtered.length === 0) {
+    el.innerHTML = `<div class="empty">Keine Termine für die gewählte Auswahl.</div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(e => {
+    const [start, end, title, venue, note] = e;
+    const dateStr = end && end !== start ? `${formatDate(start)} – ${formatDate(end)}` : formatDate(start);
+    return `
+      <div class="event">
+        <div class="date">${dateStr}</div>
+        <div class="title">${escapeHtml(title)}</div>
+        <div class="venue">${escapeHtml(VENUE_LABELS[venue] || venue)}</div>
+        ${note ? `<div class="note">${escapeHtml(note)}</div>` : ""}
+      </div>
+    `;
+  }).join("");
+}
+
+function formatDate(iso) {
+  const [y, m, d] = iso.split("-");
+  return `${d}.${m}.${y}`;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+// Tag/Nacht-Umschaltung (Taxi-Dachzeichen-Logik: Nacht = an/dunkel, Tag = aus/hell)
+function initTheme() {
+  const saved = localStorage.getItem("taxi-theme");
+  const hour = new Date().getHours();
+  const theme = saved || (hour >= 20 || hour < 6 ? "dark" : "light");
+  applyTheme(theme);
+}
+
+function applyTheme(theme) {
+  if (theme === "dark") {
+    document.documentElement.setAttribute("data-theme", "dark");
+    document.getElementById("themeToggle").textContent = "☀️";
+  } else {
+    document.documentElement.removeAttribute("data-theme");
+    document.getElementById("themeToggle").textContent = "🌙";
+  }
+  localStorage.setItem("taxi-theme", theme);
+}
+
+document.getElementById("themeToggle").addEventListener("click", () => {
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+  applyTheme(isDark ? "light" : "dark");
+});
+
+initTheme();
+loadAllEvents();
+</script>
+
+</body>
+</html>
