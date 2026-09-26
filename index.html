@@ -243,7 +243,7 @@ const FILES = [
 ];
 
 const VENUES = [
-  { venue: "arena",   label: "Fortuna",   icon: "⚽" },
+  { venue: "arena",   label: "Arena",   icon: "🏟️" },
   { venue: "dome",    label: "Dome",    icon: "🎫" },
   { venue: "meh",     label: "MEH",     icon: "🎤" },
   { venue: "messe",   label: "Messe",   icon: "🏢" },
@@ -252,12 +252,12 @@ const VENUES = [
 ];
 
 const VENUE_FULL_LABEL = {
-  arena: "Fortuna",
+  arena: "Merkur Spiel-Arena",
   dome: "PSD Bank Dome",
   meh: "Mitsubishi Electric Halle",
   messe: "Messe Düsseldorf",
   deg: "DEG (PSD Bank Dome)",
-  fortuna: "Fortuna",
+  fortuna: "Fortuna Düsseldorf",
 };
 
 const VENUE_ICON = Object.fromEntries(VENUES.map(v => [v.venue, v.icon]));
@@ -368,7 +368,7 @@ function renderEvents() {
     // Prüfen, ob das Venue aktiv ist
     if (!activeVenues.has(e[3])) return false;
     
-    // NEU: Wenn Venue 'dome' ist und der Titel/Eintrag auf DEG hindeutet, ausblenden
+    // DEG-Spiele im Dome ausblenden
     if (e[3] === 'dome' && /düsseldorfer eg|deg/i.test(e[2])) {
       return false;
     }
