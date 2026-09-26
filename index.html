@@ -379,8 +379,8 @@ function renderEvents() {
     // Prüfen, ob das Venue aktiv ist
     if (!activeVenues.has(venue)) return false;
     
-    // Aggressiver Filter für DEG-Spiele im Dome (fängt "Duesseldorfer", "Düsseldorfer", "Eg", "Eisbären" etc. ab)
-    if (venue === 'dome' && /d[uü]sseldorfer\s*eg|deg\b/i.test(title)) {
+    // Aggressiver Filter für DEG-Spiele im Dome (fängt "Duesseldorfer" ab)
+if (e[3] === 'dome' && /duesseldorfer eg|deg/i.test(e[2])) {
       return false;
     }
 
