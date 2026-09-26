@@ -16,8 +16,8 @@ TODAY = dt.datetime.now().date().isoformat()
 JS_DETAIL = r"""() => {
     const body = document.body ? document.body.innerText : "";
 
-    const get = label => {
-        // Erlaubt optional das Wort "ab" nach dem Label (z.B. "Einlass ab 18:00")
+	const get = label => {
+        // Sucht nach Label, optional gefolgt von "ab", Doppelpunkt und der Uhrzeit
         const re = new RegExp(label + "(?:\\s+ab)?\\s*:?\\s*(\\d{1,2}[:.]\\d{2})", "i");
         const m = body.match(re);
         return m ? m[1].replace(".", ":") + " Uhr" : "";
