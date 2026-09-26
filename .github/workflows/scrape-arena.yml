@@ -1,0 +1,34 @@
+name: Scrape Arena
+
+on:
+  schedule:
+    # 02:00 UTC = 04:00 Uhr deutscher Sommerzeit (CEST).
+    # Achtung: nach der Zeitumstellung Ende Oktober auf Winterzeit (CET)
+    # entspricht 02:00 UTC dann 03:00 Uhr deutscher Zeit — cron ggf. auf
+    # "0 3 * * *" anpassen, wenn 4 Uhr lokal wichtig ist.
+    - cron: "0 2 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4 playwright
+          playwright install --with-deps chromium
+
+      - name: Run scraper
+        run: python scrape_arena.py
+
+      - name: Commit result
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Automatisches Update: arena.json"
+          file_pattern: arena.json
