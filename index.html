@@ -363,7 +363,18 @@ function dayLabel(iso) {
 
 function renderEvents() {
   const el = document.getElementById("eventList");
-  const filtered = allEvents.filter(e => activeVenues.has(e[3]));
+  
+  const filtered = allEvents.filter(e => {
+    // Prüfen, ob das Venue aktiv ist
+    if (!activeVenues.has(e[3])) return false;
+    
+    // NEU: Wenn Venue 'dome' ist und der Titel/Eintrag auf DEG hindeutet, ausblenden
+    if (e[3] === 'dome' && /düsseldorfer eg|deg/i.test(e[2])) {
+      return false;
+    }
+
+    return true;
+  });
 
   if (filtered.length === 0) {
     el.innerHTML = `<div class="empty">Keine Termine für die gewählte Auswahl.</div>`;
