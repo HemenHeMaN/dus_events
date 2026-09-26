@@ -233,9 +233,6 @@
 <main id="eventList"></main>
 
 <script>
-// Dateien, die geladen werden. deg.json und fortuna.json sind eigene
-// Scraper/Workflows, ihre Events tragen aber venue="dome" bzw. "arena" und
-// laufen deshalb automatisch im richtigen Filter-Button mit.
 const FILES = [
   "arena.json",
   "dome.json",
@@ -246,7 +243,7 @@ const FILES = [
 ];
 
 const VENUES = [
-  { venue: "arena",   label: "Arena",   icon: "🏟️" },
+  { venue: "arena",   label: "Fortuna",   icon: "⚽" },
   { venue: "dome",    label: "Dome",    icon: "🎫" },
   { venue: "meh",     label: "MEH",     icon: "🎤" },
   { venue: "messe",   label: "Messe",   icon: "🏢" },
@@ -255,12 +252,12 @@ const VENUES = [
 ];
 
 const VENUE_FULL_LABEL = {
-  arena: "Merkur Spiel-Arena",
+  arena: "Fortuna",
   dome: "PSD Bank Dome",
   meh: "Mitsubishi Electric Halle",
   messe: "Messe Düsseldorf",
   deg: "DEG (PSD Bank Dome)",
-  fortuna: "Fortuna Düsseldorf (Arena)",
+  fortuna: "Fortuna",
 };
 
 const VENUE_ICON = Object.fromEntries(VENUES.map(v => [v.venue, v.icon]));
@@ -337,8 +334,6 @@ function renderVenueFilter() {
   });
 }
 
-// Extrahiert die relevanteste Uhrzeit aus der Notiz, priorisiert "Beginn",
-// dann "Anstoß", dann "Einlass" als Fallback.
 function extractTime(note) {
   if (!note) return null;
   const priorities = ["Beginn", "Anstoß"];
@@ -375,7 +370,6 @@ function renderEvents() {
     return;
   }
 
-  // Nach Startdatum gruppieren, damit pro Tag ein Header erscheint.
   const groups = [];
   let lastDate = null;
   for (const e of filtered) {
@@ -434,7 +428,6 @@ function escapeHtml(s) {
   }[c]));
 }
 
-// Tag/Nacht-Umschaltung (Taxi-Dachzeichen-Logik: Nacht = an/dunkel, Tag = aus/hell)
 function initTheme() {
   const saved = localStorage.getItem("taxi-theme");
   const hour = new Date().getHours();
