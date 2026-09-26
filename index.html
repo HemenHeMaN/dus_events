@@ -6,20 +6,34 @@
 <title>Taxi Events Düsseldorf</title>
 <style>
   :root {
-    --bg: #f4f4f6;
+    --bg: #f2f2f5;
     --card-bg: #ffffff;
     --text: #1a1a1a;
-    --muted: #666;
-    --accent: #d4a017;
-    --border: #e0e0e0;
+    --muted: #6b6b70;
+    --accent: #c9950f;
+    --border: #e4e4e8;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06);
+    --arena: #2f7d4f;
+    --dome: #2f6bb0;
+    --meh: #a8398c;
+    --messe: #b0722f;
+    --deg: #3f7fb5;
+    --fortuna: #3f9a4f;
   }
   [data-theme="dark"] {
-    --bg: #14151a;
-    --card-bg: #1f2128;
-    --text: #f0f0f0;
-    --muted: #9a9a9a;
-    --accent: #f5c542;
-    --border: #33353d;
+    --bg: #101114;
+    --card-bg: #1c1e24;
+    --text: #f2f2f2;
+    --muted: #9497a0;
+    --accent: #f0c040;
+    --border: #2c2e36;
+    --shadow: 0 1px 4px rgba(0,0,0,0.4);
+    --arena: #4fae76;
+    --dome: #5b9ce0;
+    --meh: #d066b8;
+    --messe: #d99a52;
+    --deg: #6ab0e6;
+    --fortuna: #6cc47d;
   }
   * { box-sizing: border-box; }
   body {
@@ -27,61 +41,183 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background: var(--bg);
     color: var(--text);
-    padding: 16px;
+    padding-bottom: 40px;
+    transition: background 0.2s ease;
   }
   header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    padding: 14px 16px 10px;
+    background: var(--bg);
+    backdrop-filter: blur(6px);
   }
-  h1 { font-size: 1.3rem; margin: 0; }
+  h1 {
+    font-size: 1.15rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
   .toggle-btn {
-    background: none;
+    background: var(--card-bg);
     border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 6px 14px;
-    font-size: 1.1rem;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    font-size: 1.05rem;
     cursor: pointer;
     color: var(--text);
+    box-shadow: var(--shadow);
+  }
+  .status {
+    color: var(--muted);
+    font-size: 0.78rem;
+    padding: 0 16px 10px;
   }
   .venue-filter {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
     gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 16px;
+    padding: 0 16px 16px;
   }
   .venue-filter button {
     background: var(--card-bg);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 16px;
-    padding: 6px 12px;
+    border: 2px solid var(--border);
+    color: var(--muted);
+    border-radius: 12px;
+    padding: 12px 10px;
     font-size: 0.85rem;
+    font-weight: 600;
     cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    white-space: nowrap;
+    box-shadow: var(--shadow);
+    transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  .venue-filter button .icon { font-size: 1.3rem; }
+  .venue-filter button:hover {
+    border-color: var(--venue-color, var(--accent));
+  }
+  .venue-filter button:active {
+    transform: scale(0.94);
   }
   .venue-filter button.active {
+    background: var(--venue-color, var(--text));
+    color: #ffffff;
+    border-color: var(--venue-color, var(--text));
+  }
+  .venue-filter button.all-btn {
+    grid-column: span 2;
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+    flex-direction: row;
+  }
+  .venue-filter button.all-btn:not(.active) {
+    background: var(--card-bg);
+    color: var(--text);
+  }
+  main { padding: 0 16px; }
+
+  .day-group { margin-bottom: 22px; }
+  .day-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0 0 8px 2px;
+  }
+  .day-header .weekday {
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+  .day-header .fulldate {
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .day-header .today-badge {
     background: var(--accent);
     color: #1a1a1a;
-    border-color: var(--accent);
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
   }
+
   .event {
     background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
     padding: 12px 14px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-left: 4px solid var(--venue-color, var(--border));
   }
-  .event .date {
+  .event .time-block {
+    flex: 0 0 auto;
+    min-width: 52px;
+    text-align: center;
+  }
+  .event .time-block .time {
+    font-weight: 700;
+    font-size: 1rem;
+    display: block;
+  }
+  .event .time-block .time-label {
+    font-size: 0.62rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .event .time-block .no-time {
+    color: var(--muted);
+    font-size: 1.1rem;
+  }
+  .event .info { flex: 1; min-width: 0; }
+  .event .title {
+    font-size: 1rem;
     font-weight: 600;
-    color: var(--accent);
-    font-size: 0.85rem;
+    margin: 0 0 3px;
+    overflow-wrap: break-word;
   }
-  .event .title { font-size: 1.05rem; margin: 4px 0 2px; }
-  .event .venue { color: var(--muted); font-size: 0.85rem; }
-  .event .note { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
-  .status { color: var(--muted); font-size: 0.85rem; margin-bottom: 12px; }
-  .empty { color: var(--muted); text-align: center; padding: 40px 0; }
+  .event .venue-line {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  .event .venue-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--venue-color, var(--muted));
+    flex-shrink: 0;
+  }
+  .event .extra-note {
+    color: var(--muted);
+    font-size: 0.75rem;
+    margin-top: 3px;
+  }
+  .empty {
+    color: var(--muted);
+    text-align: center;
+    padding: 60px 20px;
+    font-size: 0.9rem;
+  }
 </style>
 </head>
 <body>
@@ -92,15 +228,14 @@
 </header>
 
 <div class="status" id="status">Lade Termine …</div>
-
 <div class="venue-filter" id="venueFilter"></div>
 
-<div id="eventList"></div>
+<main id="eventList"></main>
 
 <script>
 // Dateien, die geladen werden. deg.json und fortuna.json sind eigene
 // Scraper/Workflows, ihre Events tragen aber venue="dome" bzw. "arena" und
-// laufen deshalb automatisch in den jeweiligen Filter-Button mit rein.
+// laufen deshalb automatisch im richtigen Filter-Button mit.
 const FILES = [
   "arena.json",
   "dome.json",
@@ -110,15 +245,26 @@ const FILES = [
   "fortuna.json",
 ];
 
-// Ein Filter-Button pro angezeigtem Ort (nicht pro Datei).
 const VENUES = [
-  { venue: "arena", label: "Merkur Spiel-Arena" },
-  { venue: "dome",  label: "PSD Bank Dome" },
-  { venue: "meh",   label: "Mitsubishi Electric Halle" },
-  { venue: "messe", label: "Messe Düsseldorf" },
+  { venue: "arena",   label: "Arena",   icon: "🏟️" },
+  { venue: "dome",    label: "Dome",    icon: "🎫" },
+  { venue: "meh",     label: "MEH",     icon: "🎤" },
+  { venue: "messe",   label: "Messe",   icon: "🏢" },
+  { venue: "deg",     label: "DEG",     icon: "🏒" },
+  { venue: "fortuna", label: "Fortuna", icon: "⚽" },
 ];
 
-const VENUE_LABELS = Object.fromEntries(VENUES.map(v => [v.venue, v.label]));
+const VENUE_FULL_LABEL = {
+  arena: "Merkur Spiel-Arena",
+  dome: "PSD Bank Dome",
+  meh: "Mitsubishi Electric Halle",
+  messe: "Messe Düsseldorf",
+  deg: "DEG (PSD Bank Dome)",
+  fortuna: "Fortuna Düsseldorf (Arena)",
+};
+
+const VENUE_ICON = Object.fromEntries(VENUES.map(v => [v.venue, v.icon]));
+const WEEKDAYS = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
 
 let allEvents = [];
 let activeVenues = new Set(VENUES.map(v => v.venue));
@@ -142,9 +288,7 @@ async function loadAllEvents() {
     }
   });
 
-  // Nach Datum, dann Titel sortieren (Format: [start, end, title, venue, note?])
   events.sort((a, b) => (a[0] + a[2]).localeCompare(b[0] + b[2]));
-
   allEvents = events;
 
   const statusEl = document.getElementById("status");
@@ -162,10 +306,27 @@ async function loadAllEvents() {
 function renderVenueFilter() {
   const el = document.getElementById("venueFilter");
   el.innerHTML = "";
+
+  const allActive = activeVenues.size === VENUES.length;
+  const allBtn = document.createElement("button");
+  allBtn.className = "all-btn" + (allActive ? " active" : "");
+  allBtn.innerHTML = `<span class="icon">✓</span><span>Alle</span>`;
+  allBtn.onclick = () => {
+    if (allActive) {
+      activeVenues = new Set();
+    } else {
+      activeVenues = new Set(VENUES.map(v => v.venue));
+    }
+    renderVenueFilter();
+    renderEvents();
+  };
+  el.appendChild(allBtn);
+
   VENUES.forEach(v => {
     const btn = document.createElement("button");
-    btn.textContent = v.label;
+    btn.style.setProperty("--venue-color", `var(--${v.venue})`);
     btn.className = activeVenues.has(v.venue) ? "active" : "";
+    btn.innerHTML = `<span class="icon">${v.icon}</span><span>${v.label}</span>`;
     btn.onclick = () => {
       if (activeVenues.has(v.venue)) activeVenues.delete(v.venue);
       else activeVenues.add(v.venue);
@@ -174,6 +335,35 @@ function renderVenueFilter() {
     };
     el.appendChild(btn);
   });
+}
+
+// Extrahiert die relevanteste Uhrzeit aus der Notiz, priorisiert "Beginn",
+// dann "Anstoß", dann "Einlass" als Fallback.
+function extractTime(note) {
+  if (!note) return null;
+  const priorities = ["Beginn", "Anstoß"];
+  for (const label of priorities) {
+    const m = note.match(new RegExp(label + "\\s*:?\\s*(\\d{1,2}:\\d{2})"));
+    if (m) return m[1];
+  }
+  const m = note.match(/(\d{1,2}:\d{2})/);
+  return m ? m[1] : null;
+}
+
+function dayLabel(iso) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const d = new Date(iso + "T00:00:00");
+  const diffDays = Math.round((d - today) / 86400000);
+
+  const weekday = WEEKDAYS[d.getDay()];
+  const fulldate = `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
+
+  let badge = "";
+  if (diffDays === 0) badge = "Heute";
+  else if (diffDays === 1) badge = "Morgen";
+
+  return { weekday, fulldate, badge };
 }
 
 function renderEvents() {
@@ -185,15 +375,49 @@ function renderEvents() {
     return;
   }
 
-  el.innerHTML = filtered.map(e => {
-    const [start, end, title, venue, note] = e;
-    const dateStr = end && end !== start ? `${formatDate(start)} – ${formatDate(end)}` : formatDate(start);
+  // Nach Startdatum gruppieren, damit pro Tag ein Header erscheint.
+  const groups = [];
+  let lastDate = null;
+  for (const e of filtered) {
+    if (e[0] !== lastDate) {
+      groups.push({ date: e[0], items: [] });
+      lastDate = e[0];
+    }
+    groups[groups.length - 1].items.push(e);
+  }
+
+  el.innerHTML = groups.map(group => {
+    const { weekday, fulldate, badge } = dayLabel(group.date);
+    const itemsHtml = group.items.map(e => {
+      const [start, end, title, venue, note] = e;
+      const time = extractTime(note);
+      const dateRange = end && end !== start ? ` (bis ${formatDate(end)})` : "";
+
+      return `
+        <div class="event" style="--venue-color: var(--${venue}, var(--border))">
+          <div class="time-block">
+            ${time ? `<span class="time">${time}</span><span class="time-label">Uhr</span>` : `<span class="no-time">–</span>`}
+          </div>
+          <div class="info">
+            <p class="title">${escapeHtml(title)}${dateRange}</p>
+            <div class="venue-line">
+              <span class="venue-dot"></span>
+              <span>${VENUE_ICON[venue] || ""} ${escapeHtml(VENUE_FULL_LABEL[venue] || venue)}</span>
+            </div>
+            ${note ? `<div class="extra-note">${escapeHtml(note)}</div>` : ""}
+          </div>
+        </div>
+      `;
+    }).join("");
+
     return `
-      <div class="event">
-        <div class="date">${dateStr}</div>
-        <div class="title">${escapeHtml(title)}</div>
-        <div class="venue">${escapeHtml(VENUE_LABELS[venue] || venue)}</div>
-        ${note ? `<div class="note">${escapeHtml(note)}</div>` : ""}
+      <div class="day-group">
+        <div class="day-header">
+          <span class="weekday">${weekday}</span>
+          <span class="fulldate">${fulldate}</span>
+          ${badge ? `<span class="today-badge">${badge}</span>` : ""}
+        </div>
+        ${itemsHtml}
       </div>
     `;
   }).join("");
