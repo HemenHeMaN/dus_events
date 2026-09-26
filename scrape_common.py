@@ -17,7 +17,8 @@ JS_DETAIL = r"""() => {
     const body = document.body ? document.body.innerText : "";
 
     const get = label => {
-        const re = new RegExp(label + "\\s*:?\\s*(\\d{1,2}[:.]\\d{2})", "i");
+        // Erlaubt optional das Wort "ab" nach dem Label (z.B. "Einlass ab 18:00")
+        const re = new RegExp(label + "(?:\\s+ab)?\\s*:?\\s*(\\d{1,2}[:.]\\d{2})", "i");
         const m = body.match(re);
         return m ? m[1].replace(".", ":") + " Uhr" : "";
     };
@@ -39,9 +40,14 @@ JS_CALENDAR = r"""els => els.map(e => {
     for (let i = 0; i < 7; i++) {
         n = n.parentElement;
         if (!n) break;
-        const h = n.querySelector('h1,h2,h3,h4,h5');
-        if (h && h.innerText.trim()) {
-            return [e.href, h.innerText.trim()];
+        // Alle Überschriften im Block einsammeln, um z.B. Künstler + Moderation zu kombinieren
+        const headings = n.querySelectorAll('h1,h2,h3,h4,h5');
+        if (headings && headings.length > 0) {
+            const texts = Array.from(headings).map(h => h.innerText.trim()).filter(Boolean);
+            if (texts.length > 0) {
+                // Mehrere gefundene Titel sauber mit " / " verknüpfen
+                return [e.href, texts.join(' / ')];
+            }
         }
     }
     return [e.href, ""];
