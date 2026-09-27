@@ -43,6 +43,7 @@
     color: var(--text);
     padding-bottom: 40px;
     transition: background 0.2s ease;
+    overflow-x: hidden;
   }
   header {
     position: sticky;
@@ -127,9 +128,17 @@
     background: var(--card-bg);
     color: var(--text);
   }
-  main { padding: 0 16px; }
+  main { 
+    padding: 0 16px; 
+    position: relative;
+  }
 
-  .day-group { margin-bottom: 22px; }
+  /* Tagesgruppen */
+  .day-group { 
+    margin-bottom: 22px; 
+    will-change: transform;
+    transition: transform 0.35s cubic-bezier(0.2, 0, 0, 1);
+  }
   .day-header {
     display: flex;
     align-items: baseline;
@@ -155,6 +164,7 @@
     letter-spacing: 0.03em;
   }
 
+  /* Event Karten */
   .event {
     background: var(--card-bg);
     border-radius: 12px;
@@ -165,7 +175,25 @@
     align-items: center;
     gap: 12px;
     border-left: 4px solid var(--venue-color, var(--border));
+    will-change: transform, opacity;
+    transition: transform 0.35s cubic-bezier(0.2, 0, 0, 1), opacity 0.35s ease;
   }
+
+  /* Animationen */
+  .event.entering {
+    opacity: 0;
+    transform: translateX(100vw);
+  }
+
+  .event.exiting {
+    opacity: 0;
+    transform: translateX(-100vw) !important;
+    position: absolute;
+    width: calc(100% - 32px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
   .event .time-block {
     flex: 0 0 auto;
     min-width: 52px;
@@ -277,11 +305,8 @@ async function loadAllEvents() {
 
   results.forEach((res, i) => {
     if (res.status === "fulfilled") {
-      // Falls die JSON-Datei intern ein anderes Venue-Kürzel nutzt, korrigieren wir es hier direkt beim Laden:
       let venueKey = FILES[i].replace(".json", "");
       let fetchedEvents = (res.value.events || []).map(e => {
-        // e ist ein Array: [start, end, title, venue, note]
-        // Wir erzwingen, dass das Venue zur jeweiligen Datei passt, falls der Scraper was anderes reinschreibt
         return [e[0], e[1], e[2], venueKey, e[4]];
       });
 
@@ -293,7 +318,13 @@ async function loadAllEvents() {
     }
   });
 
-  events.sort((a, b) => (a[0] + a[2]).localeCompare(b[0] + b[2]));
+  // Sortierung nach Datum, Uhrzeit & Titel
+  events.sort((a, b) => {
+    const keyA = a[0] + (extractTime(a[4]) || "00:00") + a[2];
+    const keyB = b[0] + (extractTime(b[4]) || "00:00") + b[2];
+    return keyA.localeCompare(keyB);
+  });
+
   allEvents = events;
 
   const statusEl = document.getElementById("status");
@@ -369,29 +400,74 @@ function dayLabel(iso) {
   return { weekday, fulldate, badge };
 }
 
+// Eindeutige ID pro Event generieren
+function getEventId(e) {
+  return `${e[0]}_${e[3]}_${e[2]}`.replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+function createEventElement(e) {
+  const [start, end, title, venue, note] = e;
+  const time = extractTime(note);
+  const dateRange = end && end !== start ? ` (bis ${formatDate(end)})` : "";
+  const eventId = getEventId(e);
+
+  const el = document.createElement("div");
+  el.className = "event";
+  el.dataset.id = eventId;
+  el.style.setProperty("--venue-color", `var(--${venue}, var(--border))`);
+
+  el.innerHTML = `
+    <div class="time-block">
+      ${time ? `<span class="time">${time}</span><span class="time-label">Uhr</span>` : `<span class="no-time">–</span>`}
+    </div>
+    <div class="info">
+      <p class="title">${escapeHtml(title)}${dateRange}</p>
+      <div class="venue-line">
+        <span class="venue-dot"></span>
+        <span>${VENUE_ICON[venue] || ""} ${escapeHtml(VENUE_FULL_LABEL[venue] || venue)}</span>
+      </div>
+      ${note ? `<div class="extra-note">${escapeHtml(note)}</div>` : ""}
+    </div>
+  `;
+  return el;
+}
+
 function renderEvents() {
-  const el = document.getElementById("eventList");
-  
+  const container = document.getElementById("eventList");
+
   const filtered = allEvents.filter(e => {
     const venue = e[3];
-    const title = e[2];
-
-    // Prüfen, ob das Venue aktiv ist
     if (!activeVenues.has(venue)) return false;
-    
-    // Aggressiver Filter für DEG-Spiele im Dome (fängt "Duesseldorfer" ab)
-if (e[3] === 'dome' && /duesseldorfer eg|deg/i.test(e[2])) {
-      return false;
-    }
-
+    if (e[3] === 'dome' && /duesseldorfer eg|deg/i.test(e[2])) return false;
     return true;
   });
 
   if (filtered.length === 0) {
-    el.innerHTML = `<div class="empty">Keine Termine für die gewählte Auswahl.</div>`;
+    container.innerHTML = `<div class="empty">Keine Termine für die gewählte Auswahl.</div>`;
     return;
+  } else {
+    const emptyEl = container.querySelector(".empty");
+    if (emptyEl) emptyEl.remove();
   }
 
+  const visibleIds = new Set(filtered.map(getEventId));
+
+  // 1. FLIP FIRST: Alte vertikale Positionen aller sichtbaren Events speichern
+  const currentCards = Array.from(container.querySelectorAll(".event:not(.exiting)"));
+  const firstPositions = new Map();
+  currentCards.forEach(card => {
+    firstPositions.set(card.dataset.id, card.getBoundingClientRect().top);
+  });
+
+  // 2. Abgewählte Elemente nach links austreten lassen
+  currentCards.forEach(card => {
+    if (!visibleIds.has(card.dataset.id)) {
+      card.classList.add("exiting");
+      setTimeout(() => card.remove(), 350);
+    }
+  });
+
+  // 3. Nach Tagen gruppieren
   const groups = [];
   let lastDate = null;
   for (const e of filtered) {
@@ -402,41 +478,82 @@ if (e[3] === 'dome' && /duesseldorfer eg|deg/i.test(e[2])) {
     groups[groups.length - 1].items.push(e);
   }
 
-  el.innerHTML = groups.map(group => {
-    const { weekday, fulldate, badge } = dayLabel(group.date);
-    const itemsHtml = group.items.map(e => {
-      const [start, end, title, venue, note] = e;
-      const time = extractTime(note);
-      const dateRange = end && end !== start ? ` (bis ${formatDate(end)})` : "";
+  // Leere/alte Tagesgruppen aufräumen
+  const activeDates = new Set(groups.map(g => g.date));
+  Array.from(container.querySelectorAll(".day-group")).forEach(groupEl => {
+    if (!activeDates.has(groupEl.dataset.date)) {
+      groupEl.remove();
+    }
+  });
 
-      return `
-        <div class="event" style="--venue-color: var(--${venue}, var(--border))">
-          <div class="time-block">
-            ${time ? `<span class="time">${time}</span><span class="time-label">Uhr</span>` : `<span class="no-time">–</span>`}
-          </div>
-          <div class="info">
-            <p class="title">${escapeHtml(title)}${dateRange}</p>
-            <div class="venue-line">
-              <span class="venue-dot"></span>
-              <span>${VENUE_ICON[venue] || ""} ${escapeHtml(VENUE_FULL_LABEL[venue] || venue)}</span>
-            </div>
-            ${note ? `<div class="extra-note">${escapeHtml(note)}</div>` : ""}
-          </div>
-        </div>
-      `;
-    }).join("");
+  // 4. Struktur im DOM aufbauen/aktualisieren
+  groups.forEach(group => {
+    let groupEl = container.querySelector(`.day-group[data-date="${group.date}"]`);
 
-    return `
-      <div class="day-group">
+    if (!groupEl) {
+      groupEl = document.createElement("div");
+      groupEl.className = "day-group";
+      groupEl.dataset.date = group.date;
+
+      const { weekday, fulldate, badge } = dayLabel(group.date);
+      groupEl.innerHTML = `
         <div class="day-header">
           <span class="weekday">${weekday}</span>
           <span class="fulldate">${fulldate}</span>
           ${badge ? `<span class="today-badge">${badge}</span>` : ""}
         </div>
-        ${itemsHtml}
-      </div>
-    `;
-  }).join("");
+      `;
+      container.appendChild(groupEl);
+    } else {
+      container.appendChild(groupEl); // In chronologischer Reihenfolge halten
+    }
+
+    group.items.forEach(e => {
+      const id = getEventId(e);
+      let card = groupEl.querySelector(`[data-id="${id}"]`);
+
+      if (!card) {
+        // Neu hinzukommende Karte (von rechts einfliegen)
+        card = createEventElement(e);
+        card.classList.add("entering");
+        groupEl.appendChild(card);
+
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            card.classList.remove("entering");
+          });
+        });
+      } else {
+        // Bestehende Karte an die exakte chronologische Stelle rücken
+        groupEl.appendChild(card);
+      }
+    });
+  });
+
+  // 5. FLIP LAST, INVERT, PLAY: Bestehende Karten geschmeidig auseinanderschieben
+  requestAnimationFrame(() => {
+    const updatedCards = Array.from(container.querySelectorAll(".event:not(.exiting):not(.entering)"));
+
+    updatedCards.forEach(card => {
+      const id = card.dataset.id;
+      const firstTop = firstPositions.get(id);
+
+      if (firstTop !== undefined) {
+        const lastTop = card.getBoundingClientRect().top;
+        const deltaY = firstTop - lastTop;
+
+        if (deltaY !== 0) {
+          card.style.transition = "none";
+          card.style.transform = `translateY(${deltaY}px)`;
+
+          requestAnimationFrame(() => {
+            card.style.transition = "transform 0.35s cubic-bezier(0.2, 0, 0, 1)";
+            card.style.transform = "";
+          });
+        }
+      }
+    });
+  });
 }
 
 function formatDate(iso) {
