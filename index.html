@@ -4,8 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Taxi Events Düsseldorf</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+<!-- Vermeidet Flimmern beim Laden des Dark Modes -->
+<script>
+  try {
+    var _t = localStorage.getItem('taxi-theme');
+    if (!_t) { var _h = new Date().getHours(); _t = (_h >= 20 || _h < 6) ? 'dark' : 'light'; }
+    if (_t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  } catch (e) {}
+</script>
+
 <style>
   :root {
+    --font: "Barlow", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
     --bg: #f2f2f5;
     --card-bg: #ffffff;
     --text: #1a1a1a;
@@ -45,6 +60,11 @@
     transition: background 0.2s ease;
     overflow-x: hidden;
   }
+
+  /* Keine Animation beim ersten Laden */
+  .no-anim, .no-anim *, .no-anim *::before, .no-anim *::after { transition: none !important; }
+  .no-anim .lit, .no-anim .glow { animation: none !important; }
+
   header {
     position: sticky;
     top: 0;
@@ -52,6 +72,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
     padding: 14px 16px 10px;
     background: var(--bg);
     backdrop-filter: blur(6px);
@@ -63,17 +84,129 @@
     align-items: center;
     gap: 8px;
   }
-  .toggle-btn {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
-    border-radius: 50%;
-    width: 38px;
-    height: 38px;
-    font-size: 1.05rem;
+
+  /* --- Taxi Dachzeichen Switch CSS --- */
+  .tx-input { display: none; }
+  .tx {
+    display: inline-block;
+    font-size: 7.5px; /* Größe des Schalters: kleiner = kompakter */
+    line-height: 1;
     cursor: pointer;
-    color: var(--text);
-    box-shadow: var(--shadow);
+    border-radius: 6em;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
   }
+  .track {
+    position: relative;
+    display: block;
+    width: 17.625em;
+    height: 5.75em;
+    border: .125em solid rgba(26,33,48,.18);
+    border-radius: 6em;
+    overflow: hidden;
+    background: linear-gradient(180deg,#cfe2f4,#f2f7fc);
+    box-shadow: inset 0 .25em .6em rgba(20,30,50,.18), 0 .35em 1em rgba(20,30,50,.16);
+    transition: border-color .6s ease;
+  }
+  .track::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,#060919,#1b2250);
+    opacity: 0;
+    transition: opacity .6s ease;
+  }
+  .tx-input:checked + label .track { border-color: rgba(255,255,255,.14); }
+  .tx-input:checked + label .track::before { opacity: 1; }
+  .t {
+    position: absolute;
+    z-index: 1;
+    top: 50%;
+    transform: translateY(-50%);
+    font: 600 1.15em/1 var(--font);
+    letter-spacing: .02em;
+    transition: opacity .4s ease;
+  }
+  .t-night { right: 1.5em; color: #52627c; }
+  .t-day { left: 1.6em; color: #93a3d2; opacity: 0; }
+  .tx-input:checked + label .track .t-night { opacity: 0; }
+  .tx-input:checked + label .track .t-day { opacity: 1; }
+  .stars { position: absolute; inset: 0; z-index: 1; opacity: 0; transition: opacity .3s ease; }
+  .tx-input:checked + label .track .stars { opacity: 1; transition: opacity .6s ease .25s; }
+  .stars i {
+    position: absolute;
+    display: block;
+    width: var(--s);
+    height: var(--s);
+    background: #fff;
+    clip-path: polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);
+    animation: twinkle 2.6s ease-in-out var(--d) infinite;
+  }
+  @keyframes twinkle {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .35; transform: scale(.7); }
+  }
+  .knob {
+    position: absolute;
+    z-index: 2;
+    top: .75em;
+    left: .75em;
+    width: 7.5em;
+    height: 4em;
+    transition: transform .75s cubic-bezier(.6,-.15,.25,1.15);
+  }
+  .tx-input:checked + label .track .knob { transform: translateX(8.375em); }
+  .glow {
+    position: absolute;
+    z-index: 0;
+    inset: -2.6em -3em;
+    background: radial-gradient(closest-side, rgba(255,206,72,.7), rgba(255,206,72,0));
+    opacity: 0;
+    transform: scale(.5);
+    pointer-events: none;
+    transition: opacity .3s ease, transform .4s ease;
+  }
+  .tx-input:checked + label .track .glow {
+    opacity: 1;
+    transform: none;
+    transition: opacity .5s ease .3s, transform .6s ease .3s;
+    animation: ignite .9s ease .55s both;
+  }
+  .sign {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    transition: filter .3s ease;
+  }
+  .tx-input:checked + label .track .sign {
+    filter: drop-shadow(0 0 .45em rgba(255,214,90,.85));
+    transition: filter .5s ease .5s;
+  }
+  .bar, .foot { fill: #454b5c; }
+  .gloss { fill: #fff; opacity: .35; }
+  .lit { opacity: 0; transition: opacity .25s ease; }
+  .tx-input:checked + label .track .lit { opacity: 1; animation: ignite .9s ease .55s both; }
+  .txt {
+    fill: #4b4a42;
+    font-family: var(--font);
+    font-weight: 800;
+    font-size: 26px;
+    transition: fill .3s ease;
+  }
+  .tx-input:checked + label .track .txt { fill: #17130a; transition: fill .3s ease .55s; }
+  @keyframes ignite {
+    0% { opacity: 0; }
+    12% { opacity: 1; }
+    20% { opacity: .15; }
+    34% { opacity: 1; }
+    44% { opacity: .4; }
+    58%,100% { opacity: 1; }
+  }
+  /* --- Ende Switch CSS --- */
+
   .status {
     color: var(--muted);
     font-size: 0.78rem;
@@ -248,11 +381,49 @@
   }
 </style>
 </head>
-<body>
+<body class="no-anim">
 
 <header>
   <h1>🚕 Events Düsseldorf</h1>
-  <button class="toggle-btn" id="themeToggle" title="Tag/Nacht umschalten">🌙</button>
+
+  <input type="checkbox" id="themeSwitch" class="tx-input" role="switch" aria-label="Nachtmodus mit eingeschaltetem Taxi-Dachzeichen">
+  <label class="tx" for="themeSwitch" title="Design umschalten">
+    <span class="track">
+      <span class="stars" aria-hidden="true">
+        <i style="left:1.0em; top:1.0em; --s:.55em; --d:0s"></i>
+        <i style="left:4.6em; top:.9em; --s:.4em; --d:.7s"></i>
+        <i style="left:6.4em; top:1.9em; --s:.35em; --d:1.3s"></i>
+        <i style="left:.9em; top:4.2em; --s:.35em; --d:.4s"></i>
+        <i style="left:3.9em; top:4.4em; --s:.3em; --d:1.8s"></i>
+        <i style="left:6.0em; top:4.1em; --s:.45em; --d:1.0s"></i>
+      </span>
+      <span class="t t-night" aria-hidden="true">Nachtfahrer</span>
+      <span class="t t-day" aria-hidden="true">Tagfahrer</span>
+      <span class="knob">
+        <span class="glow"></span>
+        <svg class="sign" viewBox="0 0 120 64" aria-hidden="true">
+          <defs>
+            <linearGradient id="offgrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#e4e0cd"/>
+              <stop offset="1" stop-color="#c6c2ac"/>
+            </linearGradient>
+            <radialGradient id="litgrad" cx=".5" cy=".4" r=".75">
+              <stop offset="0" stop-color="#fffdf0"/>
+              <stop offset=".55" stop-color="#fff0a6"/>
+              <stop offset="1" stop-color="#ffd24d"/>
+            </radialGradient>
+          </defs>
+          <rect class="bar" x="16" y="46" width="88" height="8" rx="3"/>
+          <rect class="foot" x="22" y="52" width="18" height="10" rx="2.5"/>
+          <rect class="foot" x="80" y="52" width="18" height="10" rx="2.5"/>
+          <rect x="4" y="6" width="112" height="44" rx="16" fill="url(#offgrad)" stroke="rgba(0,0,0,.2)" stroke-width="1"/>
+          <rect class="lit" x="4" y="6" width="112" height="44" rx="16" fill="url(#litgrad)"/>
+          <rect class="gloss" x="14" y="10" width="92" height="9" rx="4.5"/>
+          <text class="txt" x="60" y="37" text-anchor="middle" textLength="78" lengthAdjust="spacingAndGlyphs">TAXI</text>
+        </svg>
+      </span>
+    </span>
+  </label>
 </header>
 
 <div class="status" id="status">Lade Termine …</div>
@@ -567,27 +738,33 @@ function escapeHtml(s) {
   }[c]));
 }
 
-function initTheme() {
-  const saved = localStorage.getItem("taxi-theme");
-  const hour = new Date().getHours();
-  const theme = saved || (hour >= 20 || hour < 6 ? "dark" : "light");
-  applyTheme(theme);
-}
+/* --- Theme (Taxi-Dachzeichen-Schalter) --- */
+const THEME_KEY = "taxi-theme";
+const themeSwitch = document.getElementById("themeSwitch");
 
 function applyTheme(theme) {
-  if (theme === "dark") {
-    document.documentElement.setAttribute("data-theme", "dark");
-    document.getElementById("themeToggle").textContent = "☀️";
-  } else {
-    document.documentElement.removeAttribute("data-theme");
-    document.getElementById("themeToggle").textContent = "🌙";
-  }
-  localStorage.setItem("taxi-theme", theme);
+  const dark = theme === "dark";
+  if (dark) document.documentElement.setAttribute("data-theme", "dark");
+  else document.documentElement.removeAttribute("data-theme");
+  themeSwitch.checked = dark;
+  try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
 }
 
-document.getElementById("themeToggle").addEventListener("click", () => {
-  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-  applyTheme(isDark ? "light" : "dark");
+function initTheme() {
+  let saved = null;
+  try { saved = localStorage.getItem(THEME_KEY); } catch (e) {}
+  const hour = new Date().getHours();
+  applyTheme(saved || (hour >= 20 || hour < 6 ? "dark" : "light"));
+
+  // Übergänge erst nach dem ersten Rendern erlauben
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => document.body.classList.remove("no-anim"));
+  });
+}
+
+themeSwitch.addEventListener("change", (e) => {
+  e.stopPropagation();
+  applyTheme(themeSwitch.checked ? "dark" : "light");
 });
 
 initTheme();
