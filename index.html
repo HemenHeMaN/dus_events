@@ -1,776 +1,224 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Taxi Events Düsseldorf</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Düsseldorf Event Dashboard</title>
+  <style>
+    :root {
+      --bg-color: #f4f6f9;
+      --card-bg: #ffffff;
+      --primary: #e30613; /* D.LIVE / Düsseldorf Red */
+      --primary-hover: #b8040f;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --border-color: #e5e7eb;
+    }
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&display=swap" rel="stylesheet">
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      margin: 0;
+      padding: 20px;
+    }
 
-<!-- Vermeidet Flimmern beim Laden des Dark Modes -->
-<script>
-  try {
-    var _t = localStorage.getItem('taxi-theme');
-    if (!_t) { var _h = new Date().getHours(); _t = (_h >= 20 || _h < 6) ? 'dark' : 'light'; }
-    if (_t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-  } catch (e) {}
-</script>
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
 
-<style>
-  :root {
-    --font: "Barlow", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
-    --bg: #f2f2f5;
-    --card-bg: #ffffff;
-    --text: #1a1a1a;
-    --muted: #6b6b70;
-    --accent: #c9950f;
-    --border: #e4e4e8;
-    --shadow: 0 1px 3px rgba(0,0,0,0.06);
-    --arena: #2f7d4f;
-    --dome: #2f6bb0;
-    --meh: #a8398c;
-    --messe: #b0722f;
-    --deg: #3f7fb5;
-    --fortuna: #3f9a4f;
-  }
-  [data-theme="dark"] {
-    --bg: #101114;
-    --card-bg: #1c1e24;
-    --text: #f2f2f2;
-    --muted: #9497a0;
-    --accent: #f0c040;
-    --border: #2c2e36;
-    --shadow: 0 1px 4px rgba(0,0,0,0.4);
-    --arena: #4fae76;
-    --dome: #5b9ce0;
-    --meh: #d066b8;
-    --messe: #d99a52;
-    --deg: #6ab0e6;
-    --fortuna: #6cc47d;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    padding-bottom: 40px;
-    transition: background 0.2s ease;
-    overflow-x: hidden;
-  }
+    h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      margin-bottom: 25px;
+    }
 
-  /* Keine Animation beim ersten Laden */
-  .no-anim, .no-anim *, .no-anim *::before, .no-anim *::after { transition: none !important; }
-  .no-anim .lit, .no-anim .glow { animation: none !important; }
+    /* --- FILTER BUTTONS LAYOUT (1 - 3 - 3) --- */
+    .filter-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 35px;
+    }
 
-  header {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 16px 10px;
-    background: var(--bg);
-    backdrop-filter: blur(6px);
-  }
-  h1 {
-    font-size: 1.15rem;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+    .filter-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+    }
 
-  /* --- Taxi Dachzeichen Switch CSS --- */
-  .tx-input { display: none; }
-  .tx {
-    display: inline-block;
-    font-size: 7.5px; /* Größe des Schalters: kleiner = kompakter */
-    line-height: 1;
-    cursor: pointer;
-    border-radius: 6em;
-    flex-shrink: 0;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .track {
-    position: relative;
-    display: block;
-    width: 17.625em;
-    height: 5.75em;
-    border: .125em solid rgba(26,33,48,.18);
-    border-radius: 6em;
-    overflow: hidden;
-    background: linear-gradient(180deg,#cfe2f4,#f2f7fc);
-    box-shadow: inset 0 .25em .6em rgba(20,30,50,.18), 0 .35em 1em rgba(20,30,50,.16);
-    transition: border-color .6s ease;
-  }
-  .track::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg,#060919,#1b2250);
-    opacity: 0;
-    transition: opacity .6s ease;
-  }
-  .tx-input:checked + label .track { border-color: rgba(255,255,255,.14); }
-  .tx-input:checked + label .track::before { opacity: 1; }
-  .t {
-    position: absolute;
-    z-index: 1;
-    top: 50%;
-    transform: translateY(-50%);
-    font: 600 1.15em/1 var(--font);
-    letter-spacing: .02em;
-    transition: opacity .4s ease;
-  }
-  .t-night { right: 1.5em; color: #52627c; }
-  .t-day { left: 1.6em; color: #93a3d2; opacity: 0; }
-  .tx-input:checked + label .track .t-night { opacity: 0; }
-  .tx-input:checked + label .track .t-day { opacity: 1; }
-  .stars { position: absolute; inset: 0; z-index: 1; opacity: 0; transition: opacity .3s ease; }
-  .tx-input:checked + label .track .stars { opacity: 1; transition: opacity .6s ease .25s; }
-  .stars i {
-    position: absolute;
-    display: block;
-    width: var(--s);
-    height: var(--s);
-    background: #fff;
-    clip-path: polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);
-    animation: twinkle 2.6s ease-in-out var(--d) infinite;
-  }
-  @keyframes twinkle {
-    0%,100% { opacity: 1; transform: scale(1); }
-    50% { opacity: .35; transform: scale(.7); }
-  }
-  .knob {
-    position: absolute;
-    z-index: 2;
-    top: .75em;
-    left: .75em;
-    width: 7.5em;
-    height: 4em;
-    transition: transform .75s cubic-bezier(.6,-.15,.25,1.15);
-  }
-  .tx-input:checked + label .track .knob { transform: translateX(8.375em); }
-  .glow {
-    position: absolute;
-    z-index: 0;
-    inset: -2.6em -3em;
-    background: radial-gradient(closest-side, rgba(255,206,72,.7), rgba(255,206,72,0));
-    opacity: 0;
-    transform: scale(.5);
-    pointer-events: none;
-    transition: opacity .3s ease, transform .4s ease;
-  }
-  .tx-input:checked + label .track .glow {
-    opacity: 1;
-    transform: none;
-    transition: opacity .5s ease .3s, transform .6s ease .3s;
-    animation: ignite .9s ease .55s both;
-  }
-  .sign {
-    position: relative;
-    z-index: 1;
-    display: block;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-    transition: filter .3s ease;
-  }
-  .tx-input:checked + label .track .sign {
-    filter: drop-shadow(0 0 .45em rgba(255,214,90,.85));
-    transition: filter .5s ease .5s;
-  }
-  .bar, .foot { fill: #454b5c; }
-  .gloss { fill: #fff; opacity: .35; }
-  .lit { opacity: 0; transition: opacity .25s ease; }
-  .tx-input:checked + label .track .lit { opacity: 1; animation: ignite .9s ease .55s both; }
-  .txt {
-    fill: #4b4a42;
-    font-family: var(--font);
-    font-weight: 800;
-    font-size: 26px;
-    transition: fill .3s ease;
-  }
-  .tx-input:checked + label .track .txt { fill: #17130a; transition: fill .3s ease .55s; }
-  @keyframes ignite {
-    0% { opacity: 0; }
-    12% { opacity: 1; }
-    20% { opacity: .15; }
-    34% { opacity: 1; }
-    44% { opacity: .4; }
-    58%,100% { opacity: 1; }
-  }
-  /* --- Ende Switch CSS --- */
+    .filter-btn {
+      background-color: #ffffff;
+      color: var(--text-main);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 20px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      text-align: center;
+    }
 
-  .status {
-    color: var(--muted);
-    font-size: 0.78rem;
-    padding: 0 16px 10px;
-  }
-  .venue-filter {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
-    gap: 8px;
-    padding: 0 16px 16px;
-  }
-  .venue-filter button {
-    background: var(--card-bg);
-    border: 2px solid var(--border);
-    color: var(--muted);
-    border-radius: 12px;
-    padding: 12px 10px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    white-space: nowrap;
-    box-shadow: var(--shadow);
-    transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-  }
-  .venue-filter button .icon { font-size: 1.3rem; }
-  .venue-filter button:hover {
-    border-color: var(--venue-color, var(--accent));
-  }
-  .venue-filter button:active {
-    transform: scale(0.94);
-  }
-  .venue-filter button.active {
-    background: var(--venue-color, var(--text));
-    color: #ffffff;
-    border-color: var(--venue-color, var(--text));
-  }
-  .venue-filter button.all-btn {
-    grid-column: span 2;
-    background: var(--text);
-    color: var(--bg);
-    border-color: var(--text);
-    flex-direction: row;
-  }
-  .venue-filter button.all-btn:not(.active) {
-    background: var(--card-bg);
-    color: var(--text);
-  }
-  main { 
-    padding: 0 16px; 
-    position: relative;
-    overflow: hidden; /* Verhindert das Ausbrechen des Bildschirms nach rechts */
-  }
+    /* Row 1: Single Top Button */
+    .filter-row.row-1 .filter-btn {
+      width: 100%;
+      max-width: 320px;
+      font-size: 1.25rem;
+      padding: 16px 24px;
+    }
 
-  /* Tagesgruppen */
-  .day-group { 
-    margin-bottom: 22px; 
-    will-change: transform;
-    transition: transform 0.35s cubic-bezier(0.2, 0, 0, 1);
-  }
-  .day-header {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    margin: 0 0 8px 2px;
-  }
-  .day-header .weekday {
-    font-weight: 700;
-    font-size: 0.95rem;
-  }
-  .day-header .fulldate {
-    color: var(--muted);
-    font-size: 0.8rem;
-  }
-  .day-header .today-badge {
-    background: var(--accent);
-    color: #1a1a1a;
-    font-size: 0.68rem;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-  }
+    /* Rows 2 & 3: 3 Grid Columns */
+    .filter-row.grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      max-width: 700px;
+      margin: 0 auto;
+    }
 
-  /* Event Karten */
-  .event {
-    background: var(--card-bg);
-    border-radius: 12px;
-    box-shadow: var(--shadow);
-    padding: 12px 14px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border-left: 4px solid var(--venue-color, var(--border));
-    will-change: transform, opacity;
-    transition: transform 0.35s cubic-bezier(0.2, 0, 0, 1), opacity 0.35s ease;
-  }
+    .filter-row.grid-3 .filter-btn {
+      width: 100%;
+    }
 
-  /* Animationen */
-  .event.entering {
-    opacity: 0;
-    transform: translateX(100%);
-  }
+    /* Active & Hover States */
+    .filter-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
 
-  .event.exiting {
-    opacity: 0;
-    transform: translateX(-100%) !important;
-    position: absolute;
-    width: calc(100% - 32px);
-    pointer-events: none;
-    z-index: 0;
-  }
+    .filter-btn.active {
+      background-color: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 4px 12px rgba(227, 6, 19, 0.3);
+    }
 
-  .event .time-block {
-    flex: 0 0 auto;
-    min-width: 52px;
-    text-align: center;
-  }
-  .event .time-block .time {
-    font-weight: 700;
-    font-size: 1rem;
-    display: block;
-  }
-  .event .time-block .time-label {
-    font-size: 0.62rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-  }
-  .event .time-block .no-time {
-    color: var(--muted);
-    font-size: 1.1rem;
-  }
-  .event .info { flex: 1; min-width: 0; }
-  .event .title {
-    font-size: 1rem;
-    font-weight: 600;
-    margin: 0 0 3px;
-    overflow-wrap: break-word;
-  }
-  .event .venue-line {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    color: var(--muted);
-    font-size: 0.8rem;
-  }
-  .event .venue-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--venue-color, var(--muted));
-    flex-shrink: 0;
-  }
-  .event .extra-note {
-    color: var(--muted);
-    font-size: 0.75rem;
-    margin-top: 3px;
-  }
-  .empty {
-    color: var(--muted);
-    text-align: center;
-    padding: 60px 20px;
-    font-size: 0.9rem;
-  }
-</style>
+    /* Event Cards */
+    .event-card {
+      background: var(--card-bg);
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      border-left: 5px solid var(--primary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .event-info h3 {
+      margin: 0 0 6px 0;
+      font-size: 1.2rem;
+    }
+
+    .event-meta {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background-color: #f3f4f6;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 600px) {
+      .filter-btn {
+        font-size: 1rem;
+        padding: 12px 8px;
+      }
+      .filter-row.row-1 .filter-btn {
+        font-size: 1.1rem;
+        padding: 14px 16px;
+      }
+    }
+  </style>
 </head>
-<body class="no-anim">
+<body>
 
-<header>
-  <h1>🚕 Events Düsseldorf</h1>
+  <div class="container">
+    <h1>Düsseldorf Events</h1>
 
-  <input type="checkbox" id="themeSwitch" class="tx-input" role="switch" aria-label="Nachtmodus mit eingeschaltetem Taxi-Dachzeichen">
-  <label class="tx" for="themeSwitch" title="Design umschalten">
-    <span class="track">
-      <span class="stars" aria-hidden="true">
-        <i style="left:1.0em; top:1.0em; --s:.55em; --d:0s"></i>
-        <i style="left:4.6em; top:.9em; --s:.4em; --d:.7s"></i>
-        <i style="left:6.4em; top:1.9em; --s:.35em; --d:1.3s"></i>
-        <i style="left:.9em; top:4.2em; --s:.35em; --d:.4s"></i>
-        <i style="left:3.9em; top:4.4em; --s:.3em; --d:1.8s"></i>
-        <i style="left:6.0em; top:4.1em; --s:.45em; --d:1.0s"></i>
-      </span>
-      <span class="t t-night" aria-hidden="true">Nachtfahrer</span>
-      <span class="t t-day" aria-hidden="true">Tagfahrer</span>
-      <span class="knob">
-        <span class="glow"></span>
-        <svg class="sign" viewBox="0 0 120 64" aria-hidden="true">
-          <defs>
-            <linearGradient id="offgrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#e4e0cd"/>
-              <stop offset="1" stop-color="#c6c2ac"/>
-            </linearGradient>
-            <radialGradient id="litgrad" cx=".5" cy=".4" r=".75">
-              <stop offset="0" stop-color="#fffdf0"/>
-              <stop offset=".55" stop-color="#fff0a6"/>
-              <stop offset="1" stop-color="#ffd24d"/>
-            </radialGradient>
-          </defs>
-          <rect class="bar" x="16" y="46" width="88" height="8" rx="3"/>
-          <rect class="foot" x="22" y="52" width="18" height="10" rx="2.5"/>
-          <rect class="foot" x="80" y="52" width="18" height="10" rx="2.5"/>
-          <rect x="4" y="6" width="112" height="44" rx="16" fill="url(#offgrad)" stroke="rgba(0,0,0,.2)" stroke-width="1"/>
-          <rect class="lit" x="4" y="6" width="112" height="44" rx="16" fill="url(#litgrad)"/>
-          <rect class="gloss" x="14" y="10" width="92" height="9" rx="4.5"/>
-          <text class="txt" x="60" y="37" text-anchor="middle" textLength="78" lengthAdjust="spacingAndGlyphs">TAXI</text>
-        </svg>
-      </span>
-    </span>
-  </label>
-</header>
-
-<div class="status" id="status">Lade Termine …</div>
-<div class="venue-filter" id="venueFilter"></div>
-
-<main id="eventList"></main>
-
-<script>
-const FILES = [
-  "arena.json",
-  "dome.json",
-  "meh.json",
-  "messe.json",
-  "deg.json",
-  "fortuna.json",
-];
-
-const VENUES = [
-  { venue: "arena",   label: "Arena",   icon: "🏟️" },
-  { venue: "dome",    label: "Dome",    icon: "🎫" },
-  { venue: "meh",     label: "MEH",     icon: "🎤" },
-  { venue: "messe",   label: "Messe",   icon: "🏢" },
-  { venue: "deg",     label: "DEG",     icon: "🏒" },
-  { venue: "fortuna", label: "Fortuna", icon: "⚽" },
-];
-
-const VENUE_FULL_LABEL = {
-  arena: "Merkur Spiel-Arena",
-  dome: "PSD Bank Dome",
-  meh: "Mitsubishi Electric Halle",
-  messe: "Messe Düsseldorf",
-  deg: "DEG (PSD Bank Dome)",
-  fortuna: "Fortuna Düsseldorf",
-};
-
-const VENUE_ICON = Object.fromEntries(VENUES.map(v => [v.venue, v.icon]));
-const WEEKDAYS = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
-
-let allEvents = [];
-let activeVenues = new Set(VENUES.map(v => v.venue));
-
-async function loadAllEvents() {
-  const results = await Promise.allSettled(
-    FILES.map(f => fetch(f, { cache: "no-store" }).then(r => r.json()))
-  );
-
-  let events = [];
-  let loadedCount = 0;
-  let updatedTimes = [];
-
-  results.forEach((res, i) => {
-    if (res.status === "fulfilled") {
-      let venueKey = FILES[i].replace(".json", "");
-      let fetchedEvents = (res.value.events || []).map(e => {
-        return [e[0], e[1], e[2], venueKey, e[4]];
-      });
-
-      events = events.concat(fetchedEvents);
-      if (res.value.updated) updatedTimes.push(res.value.updated);
-      loadedCount++;
-    } else {
-      console.warn(`Konnte ${FILES[i]} nicht laden:`, res.reason);
-    }
-  });
-
-  // Sortierung nach Datum, Uhrzeit & Titel
-  events.sort((a, b) => {
-    const keyA = a[0] + (extractTime(a[4]) || "00:00") + a[2];
-    const keyB = b[0] + (extractTime(b[4]) || "00:00") + b[2];
-    return keyA.localeCompare(keyB);
-  });
-
-  allEvents = events;
-
-  const statusEl = document.getElementById("status");
-  if (loadedCount === 0) {
-    statusEl.textContent = "Keine Termine geladen — bitte später erneut versuchen.";
-  } else {
-    const newest = updatedTimes.sort().slice(-1)[0] || "";
-    statusEl.textContent = `${loadedCount}/${FILES.length} Quellen geladen · Stand: ${newest}`;
-  }
-
-  renderVenueFilter();
-  renderEvents();
-}
-
-function renderVenueFilter() {
-  const el = document.getElementById("venueFilter");
-  el.innerHTML = "";
-
-  const allActive = activeVenues.size === VENUES.length;
-  const allBtn = document.createElement("button");
-  allBtn.className = "all-btn" + (allActive ? " active" : "");
-  allBtn.innerHTML = `<span class="icon">✓</span><span>Alle</span>`;
-  allBtn.onclick = () => {
-    if (allActive) {
-      activeVenues = new Set();
-    } else {
-      activeVenues = new Set(VENUES.map(v => v.venue));
-    }
-    renderVenueFilter();
-    renderEvents();
-  };
-  el.appendChild(allBtn);
-
-  VENUES.forEach(v => {
-    const btn = document.createElement("button");
-    btn.style.setProperty("--venue-color", `var(--${v.venue})`);
-    btn.className = activeVenues.has(v.venue) ? "active" : "";
-    btn.innerHTML = `<span class="icon">${v.icon}</span><span>${v.label}</span>`;
-    btn.onclick = () => {
-      if (activeVenues.has(v.venue)) activeVenues.delete(v.venue);
-      else activeVenues.add(v.venue);
-      renderVenueFilter();
-      renderEvents();
-    };
-    el.appendChild(btn);
-  });
-}
-
-function extractTime(note) {
-  if (!note) return null;
-  const priorities = ["Beginn", "Anstoß"];
-  for (const label of priorities) {
-    const m = note.match(new RegExp(label + "\\s*:?\\s*(\\d{1,2}:\\d{2})"));
-    if (m) return m[1];
-  }
-  const m = note.match(/(\d{1,2}:\d{2})/);
-  return m ? m[1] : null;
-}
-
-function dayLabel(iso) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const d = new Date(iso + "T00:00:00");
-  const diffDays = Math.round((d - today) / 86400000);
-
-  const weekday = WEEKDAYS[d.getDay()];
-  const fulldate = `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
-
-  let badge = "";
-  if (diffDays === 0) badge = "Heute";
-  else if (diffDays === 1) badge = "Morgen";
-
-  return { weekday, fulldate, badge };
-}
-
-// Eindeutige ID pro Event generieren
-function getEventId(e) {
-  return `${e[0]}_${e[3]}_${e[2]}`.replace(/[^a-zA-Z0-9_-]/g, "_");
-}
-
-function createEventElement(e) {
-  const [start, end, title, venue, note] = e;
-  const time = extractTime(note);
-  const dateRange = end && end !== start ? ` (bis ${formatDate(end)})` : "";
-  const eventId = getEventId(e);
-
-  const el = document.createElement("div");
-  el.className = "event";
-  el.dataset.id = eventId;
-  el.style.setProperty("--venue-color", `var(--${venue}, var(--border))`);
-
-  el.innerHTML = `
-    <div class="time-block">
-      ${time ? `<span class="time">${time}</span><span class="time-label">Uhr</span>` : `<span class="no-time">–</span>`}
-    </div>
-    <div class="info">
-      <p class="title">${escapeHtml(title)}${dateRange}</p>
-      <div class="venue-line">
-        <span class="venue-dot"></span>
-        <span>${VENUE_ICON[venue] || ""} ${escapeHtml(VENUE_FULL_LABEL[venue] || venue)}</span>
+    <!-- Filter Buttons (1 - 3 - 3 Layout) -->
+    <div class="filter-container">
+      
+      <!-- Reihe 1: Alle -->
+      <div class="filter-row row-1">
+        <button class="filter-btn active" onclick="filterEvents('all', this)">Alle</button>
       </div>
-      ${note ? `<div class="extra-note">${escapeHtml(note)}</div>` : ""}
+
+      <!-- Reihe 2: Arena, Dome, MEH -->
+      <div class="filter-row grid-3">
+        <button class="filter-btn" onclick="filterEvents('arena', this)">Arena</button>
+        <button class="filter-btn" onclick="filterEvents('dome', this)">Dome</button>
+        <button class="filter-btn" onclick="filterEvents('meh', this)">MEH</button>
+      </div>
+
+      <!-- Reihe 3: Messe, DEG, Fortuna -->
+      <div class="filter-row grid-3">
+        <button class="filter-btn" onclick="filterEvents('messe', this)">Messe</button>
+        <button class="filter-btn" onclick="filterEvents('deg', this)">DEG</button>
+        <button class="filter-btn" onclick="filterEvents('fortuna', this)">Fortuna</button>
+      </div>
+
     </div>
-  `;
-  return el;
-}
 
-function renderEvents() {
-  const container = document.getElementById("eventList");
-
-  const filtered = allEvents.filter(e => {
-    const venue = e[3];
-    if (!activeVenues.has(venue)) return false;
-    if (e[3] === 'dome' && /duesseldorfer eg|deg/i.test(e[2])) return false;
-    return true;
-  });
-
-  if (filtered.length === 0) {
-    container.innerHTML = `<div class="empty">Keine Termine für die gewählte Auswahl.</div>`;
-    return;
-  } else {
-    const emptyEl = container.querySelector(".empty");
-    if (emptyEl) emptyEl.remove();
-  }
-
-  const visibleIds = new Set(filtered.map(getEventId));
-
-  // 1. FLIP FIRST: Alte vertikale Positionen aller sichtbaren Events speichern
-  const currentCards = Array.from(container.querySelectorAll(".event:not(.exiting)"));
-  const firstPositions = new Map();
-  currentCards.forEach(card => {
-    firstPositions.set(card.dataset.id, card.getBoundingClientRect().top);
-  });
-
-  // 2. Abgewählte Elemente nach links austreten lassen
-  currentCards.forEach(card => {
-    if (!visibleIds.has(card.dataset.id)) {
-      card.classList.add("exiting");
-      setTimeout(() => card.remove(), 350);
-    }
-  });
-
-  // 3. Nach Tagen gruppieren
-  const groups = [];
-  let lastDate = null;
-  for (const e of filtered) {
-    if (e[0] !== lastDate) {
-      groups.push({ date: e[0], items: [] });
-      lastDate = e[0];
-    }
-    groups[groups.length - 1].items.push(e);
-  }
-
-  // Leere/alte Tagesgruppen aufräumen
-  const activeDates = new Set(groups.map(g => g.date));
-  Array.from(container.querySelectorAll(".day-group")).forEach(groupEl => {
-    if (!activeDates.has(groupEl.dataset.date)) {
-      groupEl.remove();
-    }
-  });
-
-  // 4. Struktur im DOM aufbauen/aktualisieren
-  groups.forEach(group => {
-    let groupEl = container.querySelector(`.day-group[data-date="${group.date}"]`);
-
-    if (!groupEl) {
-      groupEl = document.createElement("div");
-      groupEl.className = "day-group";
-      groupEl.dataset.date = group.date;
-
-      const { weekday, fulldate, badge } = dayLabel(group.date);
-      groupEl.innerHTML = `
-        <div class="day-header">
-          <span class="weekday">${weekday}</span>
-          <span class="fulldate">${fulldate}</span>
-          ${badge ? `<span class="today-badge">${badge}</span>` : ""}
+    <!-- Event Liste -->
+    <div id="events-list">
+      <!-- Beispiel-Events -->
+      <div class="event-card" data-venue="arena">
+        <div class="event-info">
+          <h3>Konzert / Mega-Event</h3>
+          <div class="event-meta">Datum: Sa, 10. Okt 2026 | Uhrzeit: 20:00 Uhr</div>
+          <span class="badge">MERKUR SPIEL-ARENA</span>
         </div>
-      `;
-      container.appendChild(groupEl);
-    } else {
-      container.appendChild(groupEl); // In chronologischer Reihenfolge halten
-    }
+      </div>
 
-    group.items.forEach(e => {
-      const id = getEventId(e);
-      let card = groupEl.querySelector(`[data-id="${id}"]`);
+      <div class="event-card" data-venue="deg">
+        <div class="event-info">
+          <h3>DEG vs. Kölner Haie</h3>
+          <div class="event-meta">Datum: So, 11. Okt 2026 | Uhrzeit: 16:30 Uhr</div>
+          <span class="badge">PSD BANK DOME (DEG)</span>
+        </div>
+      </div>
 
-      if (!card) {
-        // Neu hinzukommende Karte (von rechts einfliegen)
-        card = createEventElement(e);
-        card.classList.add("entering");
-        groupEl.appendChild(card);
+      <div class="event-card" data-venue="meh">
+        <div class="event-info">
+          <h3>Live Comedy Show</h3>
+          <div class="event-meta">Datum: Fr, 16. Okt 2026 | Uhrzeit: 19:30 Uhr</div>
+          <span class="badge">Mitsubishi Electric HALLE</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            card.classList.remove("entering");
-          });
-        });
-      } else {
-        // Bestehende Karte an die exakte chronologische Stelle rücken
-        groupEl.appendChild(card);
-      }
-    });
-  });
+  <script>
+    function filterEvents(venue, btnElement) {
+      // Button Active-State umschalten
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      btnElement.classList.add('active');
 
-  // 5. FLIP LAST, INVERT, PLAY: Bestehende Karten geschmeidig auseinanderschieben
-  requestAnimationFrame(() => {
-    const updatedCards = Array.from(container.querySelectorAll(".event:not(.exiting):not(.entering)"));
-
-    updatedCards.forEach(card => {
-      const id = card.dataset.id;
-      const firstTop = firstPositions.get(id);
-
-      if (firstTop !== undefined) {
-        const lastTop = card.getBoundingClientRect().top;
-        const deltaY = firstTop - lastTop;
-
-        if (deltaY !== 0) {
-          card.style.transition = "none";
-          card.style.transform = `translateY(${deltaY}px)`;
-
-          requestAnimationFrame(() => {
-            card.style.transition = "transform 0.35s cubic-bezier(0.2, 0, 0, 1)";
-            card.style.transform = "";
-          });
+      // Cards filtern
+      const cards = document.querySelectorAll('.event-card');
+      cards.forEach(card => {
+        if (venue === 'all' || card.getAttribute('data-venue') === venue) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
         }
-      }
-    });
-  });
-}
-
-function formatDate(iso) {
-  const [y, m, d] = iso.split("-");
-  return `${d}.${m}.${y}`;
-}
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  }[c]));
-}
-
-/* --- Theme (Taxi-Dachzeichen-Schalter) --- */
-const THEME_KEY = "taxi-theme";
-const themeSwitch = document.getElementById("themeSwitch");
-
-function applyTheme(theme) {
-  const dark = theme === "dark";
-  if (dark) document.documentElement.setAttribute("data-theme", "dark");
-  else document.documentElement.removeAttribute("data-theme");
-  themeSwitch.checked = dark;
-  try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
-}
-
-function initTheme() {
-  let saved = null;
-  try { saved = localStorage.getItem(THEME_KEY); } catch (e) {}
-  const hour = new Date().getHours();
-  applyTheme(saved || (hour >= 20 || hour < 6 ? "dark" : "light"));
-
-  // Übergänge erst nach dem ersten Rendern erlauben
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => document.body.classList.remove("no-anim"));
-  });
-}
-
-themeSwitch.addEventListener("change", (e) => {
-  e.stopPropagation();
-  applyTheme(themeSwitch.checked ? "dark" : "light");
-});
-
-initTheme();
-loadAllEvents();
-</script>
-
+      });
+    }
+  </script>
 </body>
 </html>
