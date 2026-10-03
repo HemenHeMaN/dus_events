@@ -264,6 +264,7 @@
   main { 
     padding: 0 16px; 
     position: relative;
+    overflow: hidden; /* Verhindert das Ausbrechen des Bildschirms nach rechts */
   }
 
   /* Tagesgruppen */
@@ -315,12 +316,12 @@
   /* Animationen */
   .event.entering {
     opacity: 0;
-    transform: translateX(100vw);
+    transform: translateX(100%);
   }
 
   .event.exiting {
     opacity: 0;
-    transform: translateX(-100vw) !important;
+    transform: translateX(-100%) !important;
     position: absolute;
     width: calc(100% - 32px);
     pointer-events: none;
