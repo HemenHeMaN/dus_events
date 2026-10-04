@@ -469,9 +469,11 @@ let allEvents = [];
 let activeVenues = new Set(VENUES.map(v => v.venue));
 
 async function loadAllEvents() {
+  const cacheBuster = "?v=" + new Date().getTime(); // Erzeugt einen eindeutigen Zeitstempel pro Aufruf
   const results = await Promise.allSettled(
-    FILES.map(f => fetch(f, { cache: "no-store" }).then(r => r.json()))
+    FILES.map(f => fetch(f + cacheBuster).then(r => r.json()))
   );
+
 
   let events = [];
   let loadedCount = 0;
