@@ -1,0 +1,38 @@
+name: Scrape Events
+
+on:
+  workflow_dispatch:
+    inputs:
+      quelle:
+        description: "Welche Quelle?"
+        type: choice
+        default: alle
+        options: [alle, arena, dome, meh, messe, deg, fortuna]
+
+permissions:
+  contents: read
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false  # ein Fehler bricht die anderen Quellen nicht ab
+      matrix:
+        quelle: ${{ fromJSON(inputs.quelle == 'alle' && '["arena","dome","meh","messe","deg","fortuna"]' || format('["{0}"]', inputs.quelle)) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4 playwright firebase-admin
+          playwright install --with-deps chromium
+
+      - name: Run scraper
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: python scrape_${{ matrix.quelle }}.py
